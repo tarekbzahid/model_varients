@@ -4,7 +4,7 @@
 original paper: https://arxiv.org/abs/1911.08415 
 
 
-##  Requirements
+##  Requirements:
 * Python 3.6
 * PyTorch
 * Pandas
@@ -12,7 +12,7 @@ original paper: https://arxiv.org/abs/1911.08415
 * Numpy
 * Wheel
 
-## parameter to be investigated
+## Parameters to be investigated:
 * no of STAtt blocks
 * no hostory steps
 * no prediction steps
