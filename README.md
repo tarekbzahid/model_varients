@@ -1,4 +1,4 @@
-#GMAN
+# GMAN
 
 ## Credits
 original paper: https://arxiv.org/abs/1911.08415 
