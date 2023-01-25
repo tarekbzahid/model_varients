@@ -18,7 +18,7 @@ original paper: https://arxiv.org/abs/1911.08415
 * no prediction steps
 * no attention heads
 * dims of each head attention outputs
-
+--
 * shape of the graph
 * weights of the edges
 * dynamic graph
