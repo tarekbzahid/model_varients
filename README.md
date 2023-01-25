@@ -13,10 +13,10 @@ original paper: https://arxiv.org/abs/1911.08415
 * Wheel
 
 ## parameter to be investigated
-* # of STAtt blocks
-* # hostory steps
-* # prediction steps
-* # attention heads
+* no of STAtt blocks
+* no hostory steps
+* no prediction steps
+* no attention heads
 * dims of each head attention outputs
 
 * shape of the graph
