@@ -32,8 +32,8 @@ We used the generateSE script which uses node2vec algorthrim to get the spatial 
 ---
 * node2vec:
   * p/q
-  * num_walks = 100
-  * walk_length = 80
-  * dimensions = 64
-  * window_size = 10
+  * num_walks 
+  * walk_length 
+  * dimensions 
+  * window_size 
 
