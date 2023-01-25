@@ -14,7 +14,7 @@ original paper: https://arxiv.org/abs/1911.08415
 
 ## Parameters to be investigated:
 * no of STAtt blocks
-* no hostory steps
+* no history steps
 * no prediction steps
 * no attention heads
 * dims of each head attention outputs
