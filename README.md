@@ -1,7 +1,7 @@
 # GMAN-LV
 
 ## Credits
-      original paper: https://arxiv.org/abs/1911.08415 
+      https://arxiv.org/abs/1911.08415 
 
 ## About
 The original codebase of GMAN was designed for PEMS and METR LA. This modified version is edited to run of 28 sensors data of the Las Vegas I15 dataset. 
