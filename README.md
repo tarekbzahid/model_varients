@@ -10,30 +10,33 @@ The code requires the data for 28 sensors in HDF format. For the STAtt block the
 
 We used the generateSE script which uses node2vec algorthrim to get the spatial embedding file, SE(LAS-28).
 
+##  Updates:
+
+
 ##  Requirements:
-* Python 3.6
-* PyTorch
-* Pandas
-* Matplotlib
-* Numpy
-* Wheel
+    * Python 3.6
+    * PyTorch
+    * Pandas
+    * Matplotlib
+    * Numpy
+    * Wheel
 
 ## Parameters to be investigated:
-* no of STAtt blocks
-* no history steps
-* no prediction steps
-* no attention heads
-* dims of each head attention outputs
----
-* shape of the graph
-* weights of the edges
-* dynamic graph
-* addition of external factors such as neighbouring traffic, weather
----
-* node2vec:
-  * p/q
-  * num_walks 
-  * walk_length 
-  * dimensions 
-  * window_size 
+    * no of STAtt blocks
+    * no history steps
+    * no prediction steps
+    * no attention heads
+    * dims of each head attention outputs
+    ---
+    * shape of the graph
+    * weights of the edges
+    * dynamic graph
+    * addition of external factors such as neighbouring traffic, weather
+    ---
+    * node2vec:
+    * p/q
+    * num_walks 
+    * walk_length 
+    * dimensions 
+    * window_size 
 
