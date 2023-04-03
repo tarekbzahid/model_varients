@@ -64,6 +64,7 @@ log_string(log, f'testX:   {testX.shape}\t\ttestY:   {testY.shape}')
 log_string(log, f'mean:   {mean:.4f}\t\tstd:   {std:.4f}')
 log_string(log, 'data loaded!')
 del trainX, trainTE, valX, valTE, testX, testTE, mean, std
+
 # build model
 log_string(log, 'compiling model...')
 
