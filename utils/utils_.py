@@ -1,3 +1,4 @@
+from cupshelpers import Printer
 import pandas as pd
 import torch
 import matplotlib.pyplot as plt
@@ -50,10 +51,12 @@ def load_data(args):
     train = traffic[: train_steps]
     val = traffic[train_steps: train_steps + val_steps]
     test = traffic[-test_steps:]
+    
     # X, Y
     trainX, trainY = seq2instance(train, args.num_his, args.num_pred)
     valX, valY = seq2instance(val, args.num_his, args.num_pred)
     testX, testY = seq2instance(test, args.num_his, args.num_pred)
+
     # normalization
     mean, std = torch.mean(trainX), torch.std(trainX)
     trainX = (trainX - mean) / std
@@ -64,25 +67,33 @@ def load_data(args):
     with open(args.SE_file, mode='r') as f:
         lines = f.readlines()
         temp = lines[0].split(' ')
-        #num_vertex, dims = int(temp[0]), int(temp[1]) original GMAN code
-        #num_vertex, dims = temp[0], temp[1]
-        num_vertex, dims = 28, 64
+        #print("temp",temp)
+        num_vertex, dims = int(temp[0]), int(temp[1])
+        #print("num vertex", num_vertex)
+        #print("dims", dims)
         SE = torch.zeros((num_vertex, dims), dtype=torch.float32)
+        #print("SE", SE)
+
         for line in lines[1:]:
             temp = line.split(' ')
-            #index = int(temp[0])
-            index = temp[0]
-            #SE[index] = torch.tensor([float(ch) for ch in temp[1:]])
+            index = int(temp[0])
+            SE[index-1] = torch.tensor([float(ch) for ch in temp[1:]])
+            
+        
+        
 
 
     # temporal embedding
+
     time = pd.DatetimeIndex(df.index)
     dayofweek = torch.reshape(torch.tensor(time.weekday), (-1, 1))
-    timeofday = (time.hour * 3600 + time.minute * 60 + time.second) \
-                    / 5*60
+    timeofday = (time.hour * 3600 + time.minute * 60 + time.second) // (300)
+                  
     #            // time.freq.delta.total_seconds()
     timeofday = torch.reshape(torch.tensor(timeofday), (-1, 1))
     time = torch.cat((dayofweek, timeofday), -1)
+
+
     # train/val/test
     train = time[: train_steps]
     val = time[train_steps: train_steps + val_steps]
