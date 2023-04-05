@@ -11,8 +11,8 @@ walk_length = 80
 dimensions = 64
 window_size = 10
 iter = 1000
-Adj_file = '../data/Adj(LAS-28).txt'
-SE_file = '../data/SE(LAS-28).txt'
+Adj_file = '../data/adj_list_las28_v2.txt'
+SE_file = '../data/SE(adj_list_las28_v2).txt'
 
 def read_graph(edgelist):
     G = nx.read_edgelist(
