@@ -1,4 +1,4 @@
-# GMAN-LV
+# GMAN-Las Vegas edited
 
 ## Credits
     https://arxiv.org/abs/1911.08415 
