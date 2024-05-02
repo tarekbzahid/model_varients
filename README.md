@@ -1,4 +1,4 @@
-## GMAN for Lav Vegas RTC FAST dataset
+## GMAN for Las Vegas RTC FAST dataset
 
 ### Credits
     https://arxiv.org/abs/1911.08415 
