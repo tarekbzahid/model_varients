@@ -1,6 +1,6 @@
 ## GMAN for Las Vegas RTC FAST dataset
 
-### GMAM paper
+### GMAN paper:
     https://arxiv.org/abs/1911.08415 
 
 ### About
