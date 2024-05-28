@@ -1,4 +1,5 @@
-K=8, L=3, SE_file='./data/I-15_NB_SE.txt', batch_size=128, d=8, decay_epoch=10, learning_rate=0.01, log_file='./data/log_I15NB_0_filled.txt', max_epoch=100, model_file='./data/model_I15NB_0_filled.pt', num_his=20, num_pred=4, patience=65, test_ratio=0.5, time_slot=15, time_stamp='./data/timestamps_new.txt', train_file='./data/train.csv', train_ratio=1, val_ratio=0.5, val_test_file='./data/val_test.csv'
+time_slot=15, num_his=20, num_pred=4, L=3, K=8, d=8, train_ratio=1, val_ratio=0.5, test_ratio=0.5, batch_size=32, max_epoch=1, patience=65, learning_rate=0.01, decay_epoch=10, train_file='./basic/data/train.csv', val_test_file='./basic/data/val_test.csv', SE_file='./basic/data/I-15_NB_SE.txt', time_stamp='./basic/data/timestamps_new.txt', model_file='./basic/data/model_I15NB_0_filled.pt', log_file='./basic/data/log_I15NB_0_filled.txt', cuda_device=0
+Using CUDA device 0: NVIDIA GeForce RTX 2070
 trainX: torch.Size([35016, 20, 63])		 trainY: torch.Size([35016, 4, 63])
 valX:   torch.Size([17496, 20, 63])		valY:   torch.Size([17496, 4, 63])
 testX:   torch.Size([17497, 20, 63])		testY:   torch.Size([17497, 4, 63])
@@ -6,12 +7,28 @@ mean:   45.4808		std:   31.1041
 data loaded!
 compiling model...
 trainable parameters: 513,795
-Using CUDA device: NVIDIA GeForce GTX 1080 Ti
-data loaded!...
-**** training model ****
+Data loaded!...
+**** Training model ****
 Data moved to GPU
-2024-04-24 01:52:10 | epoch: 0001/100, training time: 262.3s, inference time: 36.7s
-train loss: 355.7718, val_loss: 230.3745
-val loss decrease from inf to 230.3745, saving model to ./data/model_I15NB_0_filled.pt
-2024-04-24 01:57:00 | epoch: 0002/100, training time: 253.6s, inference time: 35.8s
-train loss: 308.5613, val_loss: 253.0011
+2024-05-24 19:30:10 | epoch: 0001/1, training time: 270.7s, inference time: 46.9s
+train loss: 349.9303, val_loss: 223.6390
+val loss decrease from inf to 223.6390, saving model to ./basic/data/model_I15NB_0_filled.pt
+Training and validation are completed, and model has been stored as ./basic/data/model_I15NB_0_filled.pt
+**** Testing model ****
+Loading model from ./basic/data/model_I15NB_0_filled.pt
+Model restored!
+Evaluating...
+Testing time: 47.4s
+                MAE		RMSE		MAPE
+Train            10.32		11.93		nan%
+Validation       7.82		9.49		nan%
+Test             7.87		9.85		nan%
+Performance in each prediction step
+Step: 01         7.73		9.80		nan%
+Step: 02         7.82		9.71		nan%
+Step: 03         7.90		9.84		nan%
+Step: 04         8.03		10.06		nan%
+Average MAE: 7.87
+Average RMSE: 9.85
+Average MAPE: nan%
+total time: 8.8min
