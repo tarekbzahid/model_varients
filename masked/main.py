@@ -1,3 +1,14 @@
+
+#######################################################################################################################
+# this version of the gman will be trained on the masked data
+# the train dataset is made with two types of data, one with missing values and the other with imputed values
+# the historical data contains missing values filled with 0 or -1 hence masking the data
+# the prediction data contains the imputed values - giving us as close as possible to the real data
+# the model therefore will hopefully learn to predict the imputed values from the masked data
+
+
+
+
 import argparse  # Importing the argparse module to parse command-line arguments
 import time  # Importing the time module to measure execution time
 import torch  # Importing PyTorch
@@ -16,7 +27,7 @@ from model.train import train
 from model.test import test
 
 def main():
-    parser = argparse.ArgumentParser()  # Creating an argument parser object
+    parser = argparse.ArgumentParser(description='Train a model on masked and imputed data')  
     # Adding command-line arguments
     parser.add_argument('--time_slot', type=int, default=15, help='a time step is 5 mins')
     parser.add_argument('--num_his', type=int, default=20, help='history steps')
@@ -25,19 +36,23 @@ def main():
     parser.add_argument('--K', type=int, default=8, help='number of attention heads')
     parser.add_argument('--d', type=int, default=8, help='dims of each head attention outputs')
     parser.add_argument('--train_ratio', type=float, default=1, help='training set [default : 1]')
-    parser.add_argument('--val_ratio', type=float, default=0.5, help='validation set [default : 0.5]')
-    parser.add_argument('--test_ratio', type=float, default=0.5, help='testing set [default : 0.5]')
+    parser.add_argument('--val_test_ratio', type=float, default=0.5, help='validation set [default : 0.5]')
+    #parser.add_argument('--test_ratio', type=float, default=0.5, help='testing set [default : 1]')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
     parser.add_argument('--max_epoch', type=int, default=1, help='epoch to run')
     parser.add_argument('--patience', type=int, default=65, help='patience for early stop')
     parser.add_argument('--learning_rate', type=float, default=0.01, help='initial learning rate')
     parser.add_argument('--decay_epoch', type=int, default=10, help='decay epoch')
-    parser.add_argument('--train_file', default='./basic/data/train.csv', help='train data CSV file')
-    parser.add_argument('--val_test_file', default='./basic/data/val_test.csv', help='validation and test data CSV file')
-    parser.add_argument('--SE_file', default='./basic/data/I-15_NB_SE.txt', help='spatial embedding file')
-    parser.add_argument('--time_stamp', default='./basic/data/timestamps_new.txt', help='time stamp file')
-    parser.add_argument('--model_file', default='./basic/data/model_I15NB_0_filled.pt', help='save the model to disk')
-    parser.add_argument('--log_file', default='./basic/data/log_I15NB_0_filled.txt', help='log file')
+    parser.add_argument('--train_x_file', default='./data/train_x_0.csv', help='train file with missing values')
+    parser.add_argument('--train_y_file', default='./data/train_y_0.csv', help='train file with imputed values')
+    parser.add_argument('--val_test_x_file', default='./data/val_test_x_0.csv', help='validation file with missing values')
+    parser.add_argument('--val_test_y_file', default='./data/val_test_y_0.csv', help='validation file with imputed values')
+    #parser.add_argument('--test_x_file', default='./masked/data/val_test.csv', help='test file with missing values')
+    #parser.add_argument('--test_y_file', default='./masked/data/val_test.csv', help='test file with imputed values')
+    parser.add_argument('--SE_file', default='./data/I-15_NB_SE.txt', help='spatial embedding file')
+    parser.add_argument('--time_stamp', default='./data/timestamps_new.txt', help='time stamp file')
+    parser.add_argument('--model_file', default='./data/model_I15NB_0_masked.pt', help='save the model to disk')
+    parser.add_argument('--log_file', default='./data/log_I15NB_0_masked.txt', help='log file')
     parser.add_argument('--cuda_device', type=int, default=0, help='default CUDA device index if GPU is available')
 
     args = parser.parse_args()  # Parsing the command-line arguments
@@ -98,7 +113,7 @@ def main():
     l = [trainPred_, trainY_, valPred_, valY_, testPred_, testY_]
     name = ['trainPred', 'trainY', 'valPred', 'valY', 'testPred', 'testY']
     for i, data in enumerate(l):
-        np.savetxt('./basic/figure/' + name[i] + '.txt', data, fmt='%s')
+        np.savetxt('./masked/figure/' + name[i] + '.txt', data, fmt='%s')
 
     print('Done!')
 

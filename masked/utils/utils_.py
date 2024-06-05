@@ -28,44 +28,68 @@ def metric(pred, label):
     return mae, rmse, mape
 
 
-def seq2instance(data, num_his, num_pred):
-    num_step, dims = data.shape
+def seq2instance(data_x, data_y, num_his, num_pred):
+    # Determine the number of time steps and dimensions in the input data
+    num_step, dims = data_x.shape
+    
+    # Calculate the number of samples that can be created given the history and prediction length
     num_sample = num_step - num_his - num_pred + 1
-    x = torch.zeros(num_sample, num_his, dims)
-    y = torch.zeros(num_sample, num_pred, dims)
+    
+    # Initialize tensors to hold the input (x) and output (y) samples
+    x = torch.zeros(num_sample, num_his, dims)  # Shape: (num_sample, num_his, dims)
+    y = torch.zeros(num_sample, num_pred, dims)  # Shape: (num_sample, num_pred, dims)
+    
+    # Iterate over the number of samples to create the input-output pairs
     for i in range(num_sample):
-        x[i] = data[i: i + num_his]
-        y[i] = data[i + num_his: i + num_his + num_pred]
+        # Extract a sequence of 'num_his' steps from data_x for input
+        x[i] = data_x[i: i + num_his]
+        # Extract the subsequent 'num_pred' steps from data_y for output
+        y[i] = data_y[i + num_his: i + num_his + num_pred]
+    
+    # Return the input (x) and output (y) tensors
     return x, y
 
 
 def load_data(args):
-    # Reading CSV train-val-test data files
-    train = pd.read_csv(args.train_file)
-    train=torch.from_numpy(train.values)
-    val_test= pd.read_csv(args.val_test_file)
-    val_test=torch.from_numpy(val_test.values)
+    # Reading CSV train-val-test data files and converting them to PyTorch tensors
+    train_x = pd.read_csv(args.train_x_file)
+    train_x = torch.from_numpy(train_x.values)  # Convert to PyTorch tensor
 
-    # train/val/test
-    num_step_train = train.shape[0]
-    num_step_val_test=val_test.shape[0]
+    train_y = pd.read_csv(args.train_y_file)
+    train_y = torch.from_numpy(train_y.values)  # Convert to PyTorch tensor
 
+    val_test_x = pd.read_csv(args.val_test_x_file)
+    val_test_x = torch.from_numpy(val_test_x.values)  # Convert to PyTorch tensor
+
+    val_test_y = pd.read_csv(args.val_test_y_file)
+    val_test_y = torch.from_numpy(val_test_y.values) # Convert to PyTorch tensor
+
+    # Determine the number of steps (rows) in train, val, and test datasets
+    num_step_train = train_x.shape[0]
+    num_step_val_test = val_test_x.shape[0]
+
+    # Calculate the number of training steps based on the training ratio
     train_steps = round(args.train_ratio * num_step_train)
-
-    test_steps = round(args.test_ratio * num_step_val_test)
-    val_steps = num_step_val_test - test_steps
-
-    train = train[: train_steps]
-    val = val_test[: val_steps]
-    test = val_test[-test_steps:]
+    val_steps = round(args.val_test_ratio * num_step_val_test)
+    test_steps = num_step_val_test - val_steps
     
-    # X, Y
-    trainX, trainY = seq2instance(train, args.num_his, args.num_pred)
-    valX, valY = seq2instance(val, args.num_his, args.num_pred)
-    testX, testY = seq2instance(test, args.num_his, args.num_pred)
+    # Slice the datasets into training, validation, and test sets
+    train_x = train_x[:train_steps]  # Take the first 'train_steps' rows
+    train_y = train_y[:train_steps]  # Corresponding imputed values
 
-    # normalization
-    mean, std = torch.mean(trainX), torch.std(trainX)
+    val_x = val_test_x[:val_steps]  # Take the first 'val_steps' rows for validation
+    val_y = val_test_y[:val_steps]  # Corresponding imputed values
+
+    test_x = val_test_x[val_steps:]  # Take the remainder for testing
+    test_y = val_test_y[val_steps:]  # Corresponding imputed values
+
+    # Convert the datasets into instances for the model
+    trainX, trainY = seq2instance(train_x, train_y, args.num_his, args.num_pred)
+    valX, valY = seq2instance(val_x, val_y, args.num_his, args.num_pred)
+    testX, testY = seq2instance(test_x, test_y, args.num_his, args.num_pred)
+
+    # Normalization
+    mean, std = torch.mean(trainY), torch.std(trainY)
     trainX = (trainX - mean) / std
     valX = (valX - mean) / std
     testX = (testX - mean) / std
@@ -123,11 +147,11 @@ def load_data(args):
     val = time[: val_steps]
     test = time[-test_steps:]
     # shape = (num_sample, num_his + num_pred, 2)
-    trainTE = seq2instance(train, args.num_his, args.num_pred)
+    trainTE = seq2instance(train, train, args.num_his, args.num_pred)
     trainTE = torch.cat(trainTE, 1).type(torch.int32)
-    valTE = seq2instance(val, args.num_his, args.num_pred)
+    valTE = seq2instance(val, val, args.num_his, args.num_pred)
     valTE = torch.cat(valTE, 1).type(torch.int32)
-    testTE = seq2instance(test, args.num_his, args.num_pred)
+    testTE = seq2instance(test, test, args.num_his, args.num_pred)
     testTE = torch.cat(testTE, 1).type(torch.int32)
 
     return (trainX, trainTE, trainY, valX, valTE, valY, testX, testTE, testY,

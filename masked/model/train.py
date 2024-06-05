@@ -134,7 +134,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
             wait = 0
             val_loss_min = val_loss
             best_model_wts = model.state_dict()
-            torch.save(best_model_wts, './basic/data/best_model_weights.pt')
+            torch.save(best_model_wts, './data/best_model_weights.pt')
         else:
             wait += 1
 
