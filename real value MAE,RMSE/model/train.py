@@ -76,6 +76,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
         start_train = time.time()
         model.train()
         train_loss = 0
+        # the loss will be calculated using real values onlyS
         for batch_idx in range(train_num_batch):
             start_idx = batch_idx * args.batch_size
             end_idx = min(num_train, (batch_idx + 1) * args.batch_size)
@@ -87,17 +88,27 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
             TE = TE.to(device)
             pred = model(X, TE)
             pred = pred * std + mean
-            loss_batch = loss_criterion(pred, label)
-            train_loss += float(loss_batch) * (end_idx - start_idx)
-            loss_batch.backward()
-            optimizer.step()
+            num_real_values = mask.sum().float()
 
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            # if there are no real values, skip the batch
 
-            if (batch_idx+1) % 5 == 0:
-                print(f'Training batch: {batch_idx+1} in epoch:{epoch}, training batch loss:{loss_batch:.4f}')
+            mask = (label != args.missing_value_placeholder) & (pred != args.missing_value_placeholder)
+            pred = pred[mask]
+            label = label[mask]
 
+            # if there are no real values, skip the batch
+            if mask.sum().item() != 0:
+                loss_batch = loss_criterion(pred, label)
+                train_loss += float(loss_batch) * (end_idx - start_idx)
+                loss_batch.backward()
+                optimizer.step()
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+                if (batch_idx+1) % 5 == 0:
+                    print(f'Training batch: {batch_idx+1} in epoch:{epoch}, training batch loss:{loss_batch:.4f}')
+       
             del X, TE, label, pred, loss_batch
 
         train_loss /= num_train
