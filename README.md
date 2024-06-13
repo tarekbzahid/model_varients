@@ -1,42 +1,9 @@
-# GMAN-LV
 
-## Credits
-    https://arxiv.org/abs/1911.08415 
+#######################################################################################################################
+# this version of the gman will be trained on the masked data
+# the train dataset is made with two types of data, one with missing values and the other with imputed values
+# the historical data contains missing values filled with 0 or -1 hence masking the data
+# the prediction data contains the imputed values - giving us as close as possible to the real data
+# the model therefore will hopefully learn to predict the imputed values from the masked data
 
-## About
-The original codebase of GMAN was designed for PEMS and METR LA. This modified version is edited to run of 28 sensors data of the Las Vegas I15 dataset. 
-
-The code requires the data for 28 sensors in HDF format. For the STAtt block the code requires a graph embeddings. For this purpose we made a linear graph for 28 sensors being the edge and each vertex having equal weight of 1. The graph is represented as adjacency matrix, Adj(LAS-28). 
-
-We used the generateSE script which uses node2vec algorthrim to get the spatial embedding file, SE(LAS-28).
-
-##  Updates:
-
-
-##  Requirements:
-    * Python 3.6
-    * PyTorch
-    * Pandas
-    * Matplotlib
-    * Numpy
-    * Wheel
-
-## Parameters to be investigated:
-    * no of STAtt blocks
-    * no history steps
-    * no prediction steps
-    * no attention heads
-    * dims of each head attention outputs
-    ---
-    * shape of the graph
-    * weights of the edges
-    * dynamic graph
-    * addition of external factors such as neighbouring traffic, weather
-    ---
-    * node2vec:
-    * p/q
-    * num_walks 
-    * walk_length 
-    * dimensions 
-    * window_size 
 

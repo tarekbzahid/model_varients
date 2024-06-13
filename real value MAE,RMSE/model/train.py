@@ -76,7 +76,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
         start_train = time.time()
         model.train()
         train_loss = 0
-        # the loss will be calculated using real values onlyS
+        # the loss will be calculated using real values only
         for batch_idx in range(train_num_batch):
             start_idx = batch_idx * args.batch_size
             end_idx = min(num_train, (batch_idx + 1) * args.batch_size)
@@ -88,13 +88,15 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
             TE = TE.to(device)
             pred = model(X, TE)
             pred = pred * std + mean
-            num_real_values = mask.sum().float()
-
-            # if there are no real values, skip the batch
-
+           
+            # check if the label and pred are not equal to the missing value placeholder
             mask = (label != args.missing_value_placeholder) & (pred != args.missing_value_placeholder)
             pred = pred[mask]
             label = label[mask]
+
+            # log the number of real values found in the batch    
+            num_real_values = mask.sum().float() # 
+            log_string(log, f'training_batch_idx: {batch_idx}, num_real_values: {num_real_values}')
 
             # if there are no real values, skip the batch
             if mask.sum().item() != 0:
@@ -109,7 +111,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
                 if (batch_idx+1) % 5 == 0:
                     print(f'Training batch: {batch_idx+1} in epoch:{epoch}, training batch loss:{loss_batch:.4f}')
        
-            del X, TE, label, pred, loss_batch
+            del X, TE, label, pred, loss_batch, mask 
 
         train_loss /= num_train
         train_total_loss.append(train_loss)
@@ -128,13 +130,36 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
                 label = valY[start_idx: end_idx]
                 pred = model(X, TE)
                 pred = pred * std + mean
-                loss_batch = loss_criterion(pred, label)
-                val_loss += loss_batch * (end_idx - start_idx)
-                del X, TE, label, pred, loss_batch
+
+                # check if the label and pred are not equal to the missing value placeholder
+                mask = (label != args.missing_value_placeholder) & (pred != args.missing_value_placeholder)
+                pred = pred[mask]
+                label = label[mask]
+
+                # log the number of real values found in the batch    
+                num_real_values = mask.sum().float() # 
+                log_string(log, f'validation_batch_idx: {batch_idx}, num_real_values: {num_real_values}')
+
+                 # if there are no real values, skip the batch
+                if mask.sum().item() != 0:
+                    loss_batch = loss_criterion(pred, label)
+                    val_loss += float(loss_batch) * (end_idx - start_idx)
+                    loss_batch.backward()
+                    optimizer.step()
+
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+                if (batch_idx+1) % 5 == 0:
+                    print(f'Training batch: {batch_idx+1} in epoch:{epoch}, training batch loss:{loss_batch:.4f}')
+       
+                del X, TE, label, pred, loss_batch, mask 
 
         val_loss /= num_val
         val_total_loss.append(val_loss)
         end_val = time.time()
+
+        # Log training and validation loss
         log_string(log, '%s | epoch: %04d/%d, training time: %.1fs, inference time: %.1fs' %
                    (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'), epoch + 1,
                     args.max_epoch, end_train - start_train, end_val - start_val))
@@ -145,7 +170,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
             wait = 0
             val_loss_min = val_loss
             best_model_wts = model.state_dict()
-            torch.save(best_model_wts, './basic/data/best_model_weights.pt')
+            torch.save(best_model_wts, args.model_file)
         else:
             wait += 1
 
