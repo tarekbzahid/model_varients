@@ -40,7 +40,7 @@ def main():
     parser.add_argument('--decay_epoch', type=int, default=10, help='decay epoch')
     parser.add_argument('--train_file', default='./basic/data/train.csv', help='train data CSV file')
     parser.add_argument('--val_test_file', default='./basic/data/val_test.csv', help='validation and test data CSV file')
-    parser.add_argument('--missing_value_placeholder', default=0, help='how missing values are represented in the data')
+    parser.add_argument('--missing_value_placeholder', default=-1, help='how missing values are represented in the data')
     parser.add_argument('--SE_file', default='./basic/data/I-15_NB_SE.txt', help='spatial embedding file')
     parser.add_argument('--time_stamp', default='./basic/data/timestamps_new.txt', help='time stamp file')
     parser.add_argument('--model_file', default='./basic/data/model_I15NB_0_filled.pt', help='save the model to disk')

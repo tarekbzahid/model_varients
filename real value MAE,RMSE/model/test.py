@@ -87,6 +87,19 @@ def test(args, log):
         testPred = testPred * std + mean
     end_test = time.time()
 
+
+    # Only using real values to calculate metrics
+    mask_train = (trainPred!= args.missing_value_placeholder) & (trainY!= args.missing_value_placeholder)
+    mask_val = (valPred != args.missing_value_placeholder) & (valY != args.missing_value_placeholder)
+    mask_test = (testPred != args.missing_value_placeholder) & (testY != args.missing_value_placeholder)
+    
+    trainPred = trainPred[mask_train]
+    trainY = trainY[mask_train]
+    valPred = valPred[mask_val]
+    valY = valY[mask_val]
+    testPred = testPred[mask_test]
+    testY = testY[mask_test]
+
     # Calculate metrics
     train_mae, train_rmse, train_mape = metric(trainPred, trainY)
     val_mae, val_rmse, val_mape = metric(valPred, valY)
