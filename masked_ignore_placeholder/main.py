@@ -34,7 +34,7 @@ def main():
     parser.add_argument('--val_ratio', type=float, default=0.5, help='validation set [default : 0.5]')
     parser.add_argument('--test_ratio', type=float, default=0.5, help='testing set [default : 0.5]')
     parser.add_argument('--batch_size', type=int, default=32, help='batch size')
-    parser.add_argument('--max_epoch', type=int, default=1, help='epoch to run')
+    parser.add_argument('--max_epoch', type=int, default=100, help='epoch to run')
     parser.add_argument('--patience', type=int, default=65, help='patience for early stop')
     parser.add_argument('--learning_rate', type=float, default=0.01, help='initial learning rate')
     parser.add_argument('--decay_epoch', type=int, default=10, help='decay epoch')
@@ -43,8 +43,8 @@ def main():
     parser.add_argument('--missing_value_placeholder', default=-1, help='how missing values are represented in the data')
     parser.add_argument('--SE_file', default='./basic/data/I-15_NB_SE.txt', help='spatial embedding file')
     parser.add_argument('--time_stamp', default='./basic/data/timestamps_new.txt', help='time stamp file')
-    parser.add_argument('--model_file', default='./basic/data/model_I15NB_0_filled.pt', help='save the model to disk')
-    parser.add_argument('--log_file', default='./basic/data/log_I15NB_0_filled.txt', help='log file')
+    parser.add_argument('--model_file', default='./basic/data/model_I15NB_ign_placeholder.pt', help='save the model to disk')
+    parser.add_argument('--log_file', default='./basic/data/log_I15NB_ign_placeholder.txt', help='log file')
     parser.add_argument('--cuda_device', type=int, default=0, help='default CUDA device index if GPU is available')
 
     args = parser.parse_args()  # Parsing the command-line arguments
