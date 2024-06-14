@@ -1,14 +1,3 @@
-The provided code contains a few logical errors. Below are the logical errors identified:
-
-1. **Validation Loss Calculation**: The validation loss should not have backward pass or optimizer step since we do not update the model during validation. 
-
-2. **Data Shuffling**: Shuffling data by setting new permutation for `trainX`, `trainTE`, and `trainY` should happen at the beginning of each epoch, not during every batch.
-
-3. **Empty Cache**: `torch.cuda.empty_cache()` is called after every batch. This is generally not required and can significantly slow down training. It should be avoided unless absolutely necessary.
-
-Here is the corrected version of the code, with the identified logical errors fixed:
-
-```python
 import time
 import datetime
 import torch
@@ -112,6 +101,7 @@ def train(model, args, log, loss_criterion, optimizer, scheduler):
             # log the number of real values found in the batch    
             num_real_values = mask.sum().float()
             log_string(log, f'training_batch_idx: {batch_idx}, num_real_values: {num_real_values}')
+            print(f'Batch idx: {batch_idx}, num_real_values: {num_real_values}, mask sum: {mask.sum().item()}')
 
             # if there are no real values, skip the batch
             if mask.sum().item() != 0:
