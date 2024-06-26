@@ -14,18 +14,58 @@ def log_string(log, string):
 
 # metric
 def metric(pred, label):
+    # Calculate the mean absolute error (MAE), root mean squared error (RMSE), and mean absolute percentage error (MAPE) metrics
+    # comment out the following code 
+    # the updated code takes into account the mask effect on the metrics
+    # the mask is created to identify non-zero labels and normalize the mask so that its average becomes 1
+    # the mask is then applied to the absolute differences between predictions and labels, squared differences for RMSE, and percentage errors
+
+    ##################
+    #mask = torch.ne(label, 0)
+    #mask = mask.type(torch.float32)
+    #mask /= torch.mean(mask)
+    #mae = torch.abs(torch.sub(pred, label)).type(torch.float32)
+    #rmse = mae ** 2
+    #mape = mae / label
+    #mae = torch.mean(mae)
+    #rmse = rmse * mask
+    #rmse = torch.sqrt(torch.mean(rmse))
+    #mape = mape * mask
+    #mape = torch.mean(mape)
+    #return mae, rmse, mape
+    ##################
+
+    # Step 1: Create a mask to identify non-zero labels.
     mask = torch.ne(label, 0)
+    
+    # Step 2: Convert the mask to numbers (0s and 1s).
     mask = mask.type(torch.float32)
-    mask /= torch.mean(mask)
-    mae = torch.abs(torch.sub(pred, label)).type(torch.float32)
-    rmse = mae ** 2
-    mape = mae / label
-    mae = torch.mean(mae)
-    rmse = rmse * mask
-    rmse = torch.sqrt(torch.mean(rmse))
-    mape = mape * mask
-    mape = torch.mean(mape)
+    
+    # Step 3: Normalize the mask so that its average becomes 1.
+    normalized_mask = mask / torch.mean(mask)
+    
+    # Step 4: Calculate the absolute differences between predictions and labels.
+    absolute_errors = torch.abs(pred - label).type(torch.float32)
+    
+    # Step 5: Calculate the squared differences for RMSE.
+    squared_errors = absolute_errors ** 2
+    
+    # Step 6: Calculate the percentage errors, avoiding division by zero.
+    percentage_errors = torch.where(label != 0, absolute_errors / label, torch.zeros_like(absolute_errors))
+    
+    # Step 7: Calculate the Mean Absolute Error (MAE).
+    # Applying the normalized mask to MAE calculation.
+    mae = torch.mean(absolute_errors * normalized_mask)
+    
+    # Step 8: Apply the mask to the squared errors and calculate RMSE.
+    rmse = torch.sqrt(torch.mean(squared_errors * normalized_mask))
+    
+    # Step 9: Apply the mask to the percentage errors and calculate MAPE.
+    mape = torch.mean(percentage_errors * normalized_mask)
+    
+    # Step 10: Return the calculated metrics.
     return mae, rmse, mape
+
 
 
 def seq2instance(data_x, data_y, num_his, num_pred):
