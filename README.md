@@ -1,9 +1,9 @@
+GMAN Training on Masked Data
 
-#######################################################################################################################
-# this version of the gman will be trained on the masked data
-# the train dataset is made with two types of data, one with missing values and the other with imputed values
-# the historical data contains missing values filled with 0 or -1 hence masking the data
-# the prediction data contains the imputed values - giving us as close as possible to the real data
-# the model therefore will hopefully learn to predict the imputed values from the masked data
+This version of GMAN is trained on masked data using two types of datasets:
 
+    Training Dataset: Contains both missing values and imputed values.
+    Historical Data: Missing values are filled with 0 or -1, masking the data.
+    Prediction Data: Contains imputed values, providing the closest approximation to real data.
 
+The model aims to learn to predict imputed values from masked data.
