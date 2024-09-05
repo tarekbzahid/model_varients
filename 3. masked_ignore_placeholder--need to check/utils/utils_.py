@@ -10,9 +10,9 @@ def log_string(log, string):
     print(string)
 
 # metric
-def metric(pred, label):
-    # Treat -1 as missing values and ignore them
-    mask = torch.ne(label, -1)
+def metric(pred, label, missing_value_placeholder):
+    # Treat placeholder as missing values and ignore them
+    mask = torch.ne(label, missing_value_placeholder)
     mask = mask.type(torch.float32)
     mask /= torch.mean(mask)
     
@@ -27,10 +27,10 @@ def metric(pred, label):
     
     return mae, rmse, mape
 
-# MAE Loss with handling for -1 (missing values)
-def mae_loss(pred, label):
-    # Mask out -1 values (missing data)
-    mask = torch.ne(label, -1)
+# MAE Loss with handling for missing values
+def mae_loss(pred, label, missing_value_placeholder):
+    # Mask out placeholder values (missing data)
+    mask = torch.ne(label, missing_value_placeholder)
     mask = mask.type(torch.float32)
     mask /= torch.mean(mask)
     
@@ -122,7 +122,6 @@ def load_data(args):
     return (trainX, trainTE, trainY, valX, valTE, valY, testX, testTE, testY,
             SE, mean, std)
 
-
 # Dataset creation
 class dataset(Dataset):
     def __init__(self, data_x, data_y):
@@ -139,7 +138,6 @@ class dataset(Dataset):
 # Statistic model parameters
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
 
 # Plot train/validation loss
 def plot_train_val_loss(train_total_loss, val_total_loss, file_path):
