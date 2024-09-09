@@ -13,6 +13,7 @@ def log_string(log, string):
 
 
 # metric
+'''
 def metric(pred, label):
     mask = torch.ne(label, 0)
     mask = mask.type(torch.float32)
@@ -26,6 +27,33 @@ def metric(pred, label):
     mape = mape * mask
     mape = torch.mean(mape)
     return mae, rmse, mape
+'''
+
+
+
+def metric(pred, label, missing_value_placeholder):
+    # Create mask based on the missing_value_placeholder instead of 0
+    mask = torch.ne(label, missing_value_placeholder)
+    
+    # Convert mask to float and normalize by its mean
+    mask = mask.type(torch.float32)
+    if torch.mean(mask) > 0:
+        mask /= torch.mean(mask)
+
+    # Calculate metrics
+    mae = torch.abs(torch.sub(pred, label)).type(torch.float32)
+    rmse = mae ** 2
+    mape = mae / torch.clamp(label, min=1e-8)  # Avoid division by zero in MAPE
+
+    mae = torch.mean(mae)
+    rmse = rmse * mask
+    rmse = torch.sqrt(torch.mean(rmse))
+
+    mape = mape * mask
+    mape = torch.mean(mape)
+
+    return mae, rmse, mape
+
 
 
 def seq2instance(data_x, data_y, num_his, num_pred):

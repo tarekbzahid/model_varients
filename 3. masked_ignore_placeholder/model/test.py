@@ -87,9 +87,8 @@ def test(args, log):
         testPred = testPred * std + mean
     end_test = time.time()
 
-
     # Only using real values to calculate metrics
-    mask_train = (trainPred!= args.missing_value_placeholder) & (trainY!= args.missing_value_placeholder)
+    mask_train = (trainPred != args.missing_value_placeholder) & (trainY != args.missing_value_placeholder)
     mask_val = (valPred != args.missing_value_placeholder) & (valY != args.missing_value_placeholder)
     mask_test = (testPred != args.missing_value_placeholder) & (testY != args.missing_value_placeholder)
     
@@ -100,10 +99,10 @@ def test(args, log):
     testPred = testPred[mask_test]
     testY = testY[mask_test]
 
-    # Calculate metrics
-    train_mae, train_rmse, train_mape = metric(trainPred, trainY)
-    val_mae, val_rmse, val_mape = metric(valPred, valY)
-    test_mae, test_rmse, test_mape = metric(testPred, testY)
+    # Calculate metrics (pass missing_value_placeholder to the metric function)
+    train_mae, train_rmse, train_mape = metric(trainPred, trainY, args.missing_value_placeholder)
+    val_mae, val_rmse, val_mape = metric(valPred, valY, args.missing_value_placeholder)
+    test_mae, test_rmse, test_mape = metric(testPred, testY, args.missing_value_placeholder)
 
     # Log testing time
     log_string(log, 'Testing time: %.1fs' % (end_test - start_test))
@@ -119,14 +118,14 @@ def test(args, log):
     # Initialize lists to store metrics for each prediction step
     MAE, RMSE, MAPE = [], [], []
 
-    # Calculate metrics for each prediction step
-    for step in range(args.num_pred):
-        mae, rmse, mape = metric(testPred[:, step], testY[:, step])
-        MAE.append(mae)
-        RMSE.append(rmse)
-        MAPE.append(mape)
-        log_string(log, 'Step: %02d         %.2f\t\t%.2f\t\t%.2f%%' %
-                   (step + 1, mae, rmse, mape * 100))
+    # If testPred and testY are 1D, evaluate them directly without step indexing
+    if len(testPred.shape) == 1 and len(testY.shape) == 1:
+        for step in range(args.num_pred):
+            mae, rmse, mape = metric(testPred, testY, args.missing_value_placeholder)
+            MAE.append(mae)
+            RMSE.append(rmse)
+            MAPE.append(mape)
+            log_string(log, 'Step: %02d         %.2f\t\t%.2f\t\t%.2f%%' % (step + 1, mae, rmse, mape * 100))   
 
     # Convert lists to tensors
     MAE_tensor = torch.tensor(MAE, device=device)
