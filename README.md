@@ -54,4 +54,4 @@ On Nevada DOT network with 35% missing data:
 
 ## Contact
 
-For research collaboration: tarek.zahid@unlv.edu
+For research collaboration: zahid@unlv.nevada.edu
