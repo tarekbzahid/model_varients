@@ -106,25 +106,55 @@ loss = MSELoss(pred_valid, label_valid)  # Only real values
 ```
 model_variants/
 ├── baseline_imputed/          # Variant 1: Full imputation
+│   ├── data/
+│   │   ├── train.csv         # Training data (imputed)
+│   │   ├── val_test.csv      # Validation/test data (imputed)
+│   │   ├── I-15_NB_SE.txt    # Spatial embeddings
+│   │   ├── timestamps_new.txt # Temporal features
+│   │   └── *.pt              # Model checkpoints
+│   ├── figure/               # Output plots and predictions
 │   ├── model/
 │   │   ├── model_.py         # GMAN architecture
 │   │   ├── train.py          # Standard training (MSE on all)
 │   │   └── test.py           # Evaluation
-│   └── main.py
+│   ├── utils/
+│   │   └── utils_.py         # Data loading & preprocessing
+│   ├── main.py               # Entry point
+│   └── test_chkpt.py         # Checkpoint testing
 │
 ├── hybrid_masked_input/       # Variant 2: Masked X, imputed Y
+│   ├── data/
+│   │   ├── train_x_0.csv     # Training inputs (with missing)
+│   │   ├── train_y_0.csv     # Training targets (imputed)
+│   │   ├── val_test_x_0.csv  # Val/test inputs (with missing)
+│   │   ├── val_test_y_0.csv  # Val/test targets (imputed)
+│   │   ├── I-15_NB_SE.txt
+│   │   └── timestamps_new.txt
+│   ├── figure/
 │   ├── model/
 │   │   ├── model_.py         # GMAN architecture
-│   │   ├── train.py          # Standard training (MSE on imputed Y)
+│   │   ├── train.py          # Hybrid training (MSE on imputed Y)
 │   │   └── test.py
-│   └── main.py
+│   ├── utils/
+│   │   └── utils_.py
+│   ├── main.py
+│   └── test_chkpt.py
 │
 └── masked_no_imputation/      # Variant 3: No imputation (BEST) ⭐
+    ├── data/
+    │   ├── train.csv         # Training data (with -1 placeholders)
+    │   ├── val_test.csv      # Val/test data (with -1 placeholders)
+    │   ├── I-15_NB_SE.txt
+    │   └── timestamps_new.txt
+    ├── figure/
     ├── model/
     │   ├── model_.py         # GMAN architecture
     │   ├── train.py          # Masked training (MSE on valid only)
     │   └── test.py
-    └── main.py
+    ├── utils/
+    │   └── utils_.py
+    ├── main.py
+    └── test_chkpt.py
 ```
 
 ---
