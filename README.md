@@ -228,4 +228,16 @@ If you use this code, please cite our papers:
   pages={2488--2493},
   year={2024}
 }
+
+@INPROCEEDINGS{10928136,
+  author={Bin Zahid, Tarek and Morris, Brendan Tran},
+  booktitle={2024 IEEE International Conference on Vehicular Electronics and Safety (ICVES)}, 
+  title={Benchmarking/Limitations of Traffic Prediction with Noisy Field Measurements}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={1-6},
+  keywords={Training;Vehicular and wireless technologies;Accuracy;Roads;Urban planning;Predictive models;Transformers;Data models;Robustness;Noise measurement},
+  doi={10.1109/ICVES61986.2024.10928136}}
+
 ```
