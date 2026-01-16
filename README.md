@@ -84,7 +84,7 @@ This repository contains three implementations that compare different strategies
 
 **Use when**: High missing data rates (>30%), production systems requiring reliable uncertainty estimates
 
-**Why it's best**: Achieves 6.3% lower RMSE by learning from real data only, without assuming imputed values are correct
+**Why it's best**: Achieves superior forecasting accuracy by learning from real data only, without assuming imputed values are correct
 
 ---
 
@@ -201,19 +201,20 @@ python main.py --train_file ./data/train.csv \
 
 ## Results
 
-Performance on Nevada DOT network with **35% missing data**:
+Performance comparison on traffic networks with **high missing data rates (30-40%)**:
 
-| Model Variant | RMSE | MAE | Inference Time | Notes |
-|--------------|------|-----|----------------|-------|
-| Basic (imputation) | 8.42 | 5.73 | 87ms | Baseline performance |
-| Masked X, Imputed Y | 8.15 | 5.52 | 89ms | Moderate improvement |
-| **Masked Ignore (Ours)** | **7.89** | **5.21** | 87ms | **Best accuracy, no bias** |
+| Model Variant | Performance | Key Characteristics |
+|--------------|-------------|---------------------|
+| Basic (imputation) | Baseline | Simple implementation, imputation bias present |
+| Masked X, Imputed Y | Moderate improvement | Handles missing inputs, still relies on target imputation |
+| **Masked Ignore (Ours)** | **Best performance** | **Lowest RMSE/MAE, no imputation bias** |
 
 **Key Findings**:
-- Masked ignore approach reduces RMSE by 6.3% vs baseline
-- Maintains real-time inference (<100ms)
+- **Masked ignore approach achieves superior forecasting accuracy** across all metrics
+- All variants maintain **real-time inference** (<100ms per prediction)
 - Performance gap increases with higher missing data rates
-- No imputation bias - all predictions based on real observations
+- **No imputation bias** - masked ignore predictions based only on real observations
+- Published results available in IEEE ICVES 2024 and IEEE ITSC 2024 papers (see Publications section)
 
 ---
 
