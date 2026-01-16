@@ -1,237 +1,231 @@
-# Spatiotemporal Traffic Forecasting with Graph Neural Networks
+# Spatiotemporal Traffic Forecasting with Missing Data
 
-Scalable graph neural network framework for real-time traffic speed prediction across Nevada DOT's 900-sensor network using GMAN (Graph Multi-Attention Network) architecture.
+Graph neural network framework for real-time traffic speed prediction on Nevada DOT's 900-sensor network. **Three model variants** comparing different missing data handling strategies using GMAN architecture.
 
-**Published at:** IEEE ICVES 2024, IEEE ITSC 2024
-
-## Key Contributions
-
-- **Novel Masked Training**: Preserves prediction uncertainty instead of imputing missing data
-- **Scalable Architecture**: Scaled from 26 to 900 sensors while maintaining real-time performance
-- **Production Deployment**: Sub-100ms inference latency
-- **Three Model Variants**: Comprehensive comparison of missing data handling strategies
-
-## Problem Context
-
-Real-world traffic sensor networks face 30-40% missing data rates from sensor failures, communication issues, and maintenance downtime. Traditional imputation approaches (filling missing values with estimates) lose uncertainty information critical for reliable predictions and can introduce systematic biases into forecasting models.
+**Published:** IEEE ICVES 2024, IEEE ITSC 2024
 
 ---
 
-## Model Variants Explained
+## Problem Statement
 
-This repository contains three implementations that compare different strategies for handling missing data in traffic prediction:
-
-### 1. Basic (`1. basic/`)
-
-**Purpose**: Baseline approach using traditional data imputation
-
-**How it works**:
-- Missing sensor values are pre-filled using imputation techniques (e.g., forward fill, mean imputation)
-- The model trains on the complete imputed dataset
-- Loss is calculated on all predicted values including imputed positions
-- Standard GMAN architecture without modifications
-
-**Key characteristics**:
-- **Data preprocessing**: Missing values filled before training
-- **Loss computation**: MSE loss on all predictions (`model/train.py:90`)
-- **Advantage**: Simple, straightforward implementation
-- **Disadvantage**: Treats imputed values as ground truth, losing uncertainty information
-
-**Use when**: You have high-quality imputation or low missing data rates (<10%)
+Real-world traffic sensor networks face **30-40% missing data** from sensor failures and communication issues. This repository compares three strategies:
+1. **Imputation** - Fill missing values before training
+2. **Hybrid** - Masked inputs, imputed targets
+3. **Uncertainty-preserving** - No imputation, loss only on valid data ⭐
 
 ---
 
-### 2. Masked Missing X, Imputed Y (`2. masked_missingX_imputedY/`)
+## Model Variants: Technical Comparison
 
-**Purpose**: Hybrid approach combining masked inputs with imputed targets
+### 1️⃣ Baseline Imputed (`baseline_imputed/`)
 
-**How it works**:
-- Input sequences (X) preserve missing value indicators/masks
-- Target values (Y) are imputed for training
-- Model learns to predict from partially missing historical data
-- Loss calculated on imputed target positions
+**Input (X):**
+- Shape: `[batch, num_his, num_sensors]`
+- Missing values **filled** using imputation (forward fill, mean, etc.)
+- All historical values are complete
 
-**Key characteristics**:
-- **Data preprocessing**: Selective imputation (targets only)
-- **Loss computation**: Standard MSE on imputed targets (`model/train.py:90`)
-- **Advantage**: Model sees realistic input patterns with missing data
-- **Disadvantage**: Still relies on imputation quality for targets
+**Target (Y):**
+- Shape: `[batch, num_pred, num_sensors]`
+- Missing values **filled** using imputation
+- All target values are complete
 
-**Use when**: You want the model to handle missing inputs but have reliable target imputation
+**Loss Calculation:**
+```python
+# model/train.py:90
+loss = MSELoss(pred, label)  # All positions included
+```
+- Standard MSE on **all predictions**
+- Treats imputed values as ground truth
+
+**Tradeoff:**
+✅ Simple implementation
+❌ Imputation bias - model trained on artificial data
 
 ---
 
-### 3. Masked Ignore Placeholder (`3. masked_ignore_placeholder/`) ⭐ **BEST RESULTS**
+### 2️⃣ Hybrid Masked Input (`hybrid_masked_input/`)
 
-**Purpose**: Uncertainty-preserving approach that avoids imputation entirely
+**Input (X):**
+- Shape: `[batch, num_his, num_sensors]`
+- Missing values **preserved** as indicators/masks
+- Model learns from realistic incomplete patterns
 
-**How it works**:
-- Missing values represented by placeholder tokens (default: -1)
-- Model processes data with placeholders intact
-- **Critical innovation**: Loss calculated ONLY on valid (non-missing) values
-- Masking logic filters out placeholder values before loss computation
+**Target (Y):**
+- Shape: `[batch, num_pred, num_sensors]`
+- Missing values **filled** using imputation
+- All target values are complete
 
-**Key characteristics**:
-- **Data preprocessing**: No imputation - placeholders preserved (`main.py:41`)
-- **Loss computation**: Masked MSE only on real values (`model/train.py:97-99`)
-  ```python
-  mask = (label != args.missing_value_placeholder) & (pred != args.missing_value_placeholder)
-  pred = pred[mask]
-  label = label[mask]
-  ```
-- **Advantage**: Preserves data uncertainty, no imputation bias, learns robust patterns
-- **Disadvantage**: Requires more data, slightly more complex training logic
+**Loss Calculation:**
+```python
+# model/train.py:90
+loss = MSELoss(pred, label)  # Imputed targets
+```
+- Standard MSE on **imputed targets**
+- No masking in loss function
 
-**Use when**: High missing data rates (>30%), production systems requiring reliable uncertainty estimates
+**Tradeoff:**
+✅ Model handles missing inputs realistically
+❌ Still relies on imputed targets for supervision
 
-**Why it's best**: Achieves superior forecasting accuracy by learning from real data only, without assuming imputed values are correct
+---
+
+### 3️⃣ Masked No Imputation (`masked_no_imputation/`) ⭐ **RECOMMENDED**
+
+**Input (X):**
+- Shape: `[batch, num_his, num_sensors]`
+- Missing values represented as **placeholder (-1)**
+- No imputation applied
+
+**Target (Y):**
+- Shape: `[batch, num_pred, num_sensors]`
+- Missing values represented as **placeholder (-1)**
+- No imputation applied
+
+**Loss Calculation:**
+```python
+# model/train.py:97-99
+mask = (label != placeholder) & (pred != placeholder)
+pred_valid = pred[mask]
+label_valid = label[mask]
+loss = MSELoss(pred_valid, label_valid)  # Only real values
+```
+- Masked MSE computed **only on valid positions**
+- Skips batches with zero valid values
+
+**Tradeoff:**
+✅ No imputation bias - learns only from real data
+✅ Preserves prediction uncertainty
+✅ Best forecasting accuracy
+❌ Requires more training data
+❌ Slightly more complex training logic
 
 ---
 
 ## Repository Structure
 
 ```
-model_varients/
-├── 1. basic/                      # Baseline with full imputation
+model_variants/
+├── baseline_imputed/          # Variant 1: Full imputation
 │   ├── model/
-│   │   ├── model_.py             # GMAN architecture
-│   │   ├── train.py              # Standard training loop
-│   │   └── test.py               # Evaluation
-│   ├── utils/
-│   │   └── utils_.py             # Data loading & preprocessing
-│   └── main.py                   # Entry point
+│   │   ├── model_.py         # GMAN architecture
+│   │   ├── train.py          # Standard training (MSE on all)
+│   │   └── test.py           # Evaluation
+│   └── main.py
 │
-├── 2. masked_missingX_imputedY/  # Hybrid masked approach
+├── hybrid_masked_input/       # Variant 2: Masked X, imputed Y
 │   ├── model/
-│   │   ├── model_.py             # GMAN architecture
-│   │   ├── train.py              # Hybrid training loop
-│   │   └── test.py               # Evaluation
-│   ├── utils/
-│   │   └── utils_.py             # Data loading & preprocessing
-│   └── main.py                   # Entry point
+│   │   ├── model_.py         # GMAN architecture
+│   │   ├── train.py          # Standard training (MSE on imputed Y)
+│   │   └── test.py
+│   └── main.py
 │
-└── 3. masked_ignore_placeholder/ # Uncertainty-preserving (BEST)
+└── masked_no_imputation/      # Variant 3: No imputation (BEST) ⭐
     ├── model/
-    │   ├── model_.py             # GMAN architecture
-    │   ├── train.py              # Masked training loop
-    │   └── test.py               # Evaluation
-    ├── utils/
-    │   └── utils_.py             # Data loading & preprocessing
-    └── main.py                   # Entry point
+    │   ├── model_.py         # GMAN architecture
+    │   ├── train.py          # Masked training (MSE on valid only)
+    │   └── test.py
+    └── main.py
 ```
 
 ---
 
-## Model Architecture: GMAN
+## GMAN Architecture
 
-All variants use the same underlying **Graph Multi-Attention Network (GMAN)** architecture:
+All variants use **Graph Multi-Attention Network (GMAN)**:
 
-**Core Components**:
-- **Spatiotemporal Embedding**: Encodes spatial (sensor locations) and temporal (time-of-day, day-of-week) features
-- **Spatial Attention**: Multi-head attention capturing inter-sensor dependencies
-- **Temporal Attention**: Multi-head attention modeling time series patterns
-- **Gated Fusion**: Combines spatial and temporal features adaptively
-- **Transform Attention**: Encoder-decoder architecture for multi-step forecasting
-
-**Architecture Flow**:
 ```
 Input → FC → [Encoder: L×STAttBlock] → TransformAttention → [Decoder: L×STAttBlock] → FC → Output
 ```
 
-Where STAttBlock = SpatialAttention + TemporalAttention + GatedFusion
+**Components:**
+- **STAttBlock** = Spatial Attention + Temporal Attention + Gated Fusion
+- **Spatial Attention**: Multi-head attention over sensors
+- **Temporal Attention**: Multi-head attention over time steps
+- **Transform Attention**: Encoder-decoder for multi-step forecasting
 
-**Key Parameters** (`main.py`):
-- `L`: Number of attention blocks (default: 3)
-- `K`: Number of attention heads (default: 8)
-- `d`: Dimension per attention head (default: 8)
-- `num_his`: Historical time steps (default: 20)
-- `num_pred`: Prediction steps (default: 4)
-
----
-
-## Installation
-
-Install dependencies:
-
-```bash
-pip install torch pandas numpy scikit-learn matplotlib
-```
-
-**Requirements**:
-- Python 3.7+
-- PyTorch 1.8+
-- CUDA-capable GPU recommended (but CPU supported)
+**Parameters:** L=3 blocks, K=8 heads, d=8 dims per head
 
 ---
 
 ## Quick Start
 
-### Running a Model Variant
-
-**Baseline Model**:
+### Installation
 ```bash
-cd "1. basic"
-python main.py --train_file ./data/train.csv \
-               --val_test_file ./data/val_test.csv \
-               --max_epoch 100 \
-               --batch_size 32
+pip install torch pandas numpy scikit-learn matplotlib
 ```
 
-**Masked Ignore Placeholder (Recommended)**:
+### Run Baseline
 ```bash
-cd "3. masked_ignore_placeholder"
+cd baseline_imputed
+python main.py --train_file ./data/train.csv \
+               --val_test_file ./data/val_test.csv \
+               --max_epoch 100 --batch_size 32
+```
+
+### Run Masked No Imputation (Recommended)
+```bash
+cd masked_no_imputation
 python main.py --train_file ./data/train.csv \
                --val_test_file ./data/val_test.csv \
                --missing_value_placeholder -1 \
-               --max_epoch 100 \
-               --batch_size 32
+               --max_epoch 100 --batch_size 32
 ```
 
-### Key Command-Line Arguments
-
-- `--num_his 20`: Number of historical time steps (input sequence length)
-- `--num_pred 4`: Number of prediction steps (forecast horizon)
-- `--batch_size 32`: Training batch size
-- `--max_epoch 100`: Maximum training epochs
+### Key Arguments
+- `--num_his 20`: Historical time steps
+- `--num_pred 4`: Prediction horizon
+- `--missing_value_placeholder -1`: Placeholder for missing data (variant 3 only)
 - `--learning_rate 0.01`: Initial learning rate
-- `--missing_value_placeholder -1`: Value representing missing data (variant 3 only)
 - `--cuda_device 0`: GPU device index
 
 ---
 
-## Results
+## Results Summary
 
-Performance comparison on traffic networks with **high missing data rates (30-40%)**:
+| Variant | Input Format | Target Format | Loss Calculation | Performance |
+|---------|-------------|---------------|------------------|-------------|
+| Baseline | Imputed | Imputed | MSE (all) | Baseline |
+| Hybrid | Masked | Imputed | MSE (imputed Y) | Moderate improvement |
+| **No Imputation** ⭐ | **Placeholders** | **Placeholders** | **MSE (valid only)** | **Best** |
 
-| Model Variant | Performance | Key Characteristics |
-|--------------|-------------|---------------------|
-| Basic (imputation) | Baseline | Simple implementation, imputation bias present |
-| Masked X, Imputed Y | Moderate improvement | Handles missing inputs, still relies on target imputation |
-| **Masked Ignore (Ours)** | **Best performance** | **Lowest RMSE/MAE, no imputation bias** |
-
-**Key Findings**:
-- **Masked ignore approach achieves superior forecasting accuracy** across all metrics
-- All variants maintain **real-time inference** (<100ms per prediction)
-- Performance gap increases with higher missing data rates
-- **No imputation bias** - masked ignore predictions based only on real observations
-- Published results available in IEEE ICVES 2024 and IEEE ITSC 2024 papers (see Publications section)
+**Key Findings** (30-40% missing data):
+- ⭐ Masked no imputation achieves **best accuracy** across all metrics
+- All variants maintain **<100ms inference** time
+- Performance gap widens with higher missing data rates
+- See [Publications](#publications) for detailed metrics
 
 ---
 
 ## Data Format
 
-**Training/Test CSV**: `[num_samples, num_sensors]` - traffic speed values
-**Spatial Embedding**: `[num_sensors, embedding_dim]` - learned sensor embeddings
-**Timestamps**: `[num_samples, 2]` - (day_of_week, time_of_day) for each sample
+**Input CSV:** `[num_samples, num_sensors]` - traffic speed values
+**Spatial Embedding:** `[num_sensors, embedding_dim]` - sensor embeddings
+**Timestamps:** `[num_samples, 2]` - (day_of_week, time_of_day)
 
-**Missing values**:
-- Variant 1 & 2: Imputed before/during training
-- Variant 3: Represented as `-1` (or custom placeholder)
+**Missing values:**
+- Baseline: Filled before training
+- Hybrid: Preserved in X, filled in Y
+- No imputation: `-1` placeholder in both X and Y
 
-## Publications (Cite if useful)
+---
 
-1. T. b. Zahid and B. Morris, "Using Deep Traffic Prediction for EMFAC Emission Estimation and Visualization," 2024 IEEE 27th International Conference on Intelligent Transportation Systems (ITSC), Edmonton, AB, Canada, 2024, pp. 2488-2493, doi: 10.1109/ITSC58415.2024.10919675. keywords: {Solid modeling;Accuracy;Decision making;Transportation;Estimation;Data visualization;Predictive models;Transformers;Data models;Environmental factors},
+## Publications
 
-2. T. Bin Zahid and B. T. Morris, "Benchmarking/Limitations of Traffic Prediction with Noisy Field Measurements," 2024 IEEE International Conference on Vehicular Electronics and Safety (ICVES), Ahmedabad, India, 2024, pp. 1-6, doi: 10.1109/ICVES61986.2024.10928136. keywords: {Training;Vehicular and wireless technologies;Accuracy;Roads;Urban planning;Predictive models;Transformers;Data models;Robustness;Noise measurement},
+1. **T. b. Zahid and B. Morris**, "Using Deep Traffic Prediction for EMFAC Emission Estimation and Visualization," *IEEE ITSC 2024*, pp. 2488-2493, doi: 10.1109/ITSC58415.2024.10919675
 
+2. **T. Bin Zahid and B. T. Morris**, "Benchmarking/Limitations of Traffic Prediction with Noisy Field Measurements," *IEEE ICVES 2024*, pp. 1-6, doi: 10.1109/ICVES61986.2024.10928136
 
+---
+
+## Citation
+
+If you use this code, please cite our papers:
+```bibtex
+@inproceedings{zahid2024emfac,
+  title={Using Deep Traffic Prediction for EMFAC Emission Estimation and Visualization},
+  author={Zahid, T. b. and Morris, B.},
+  booktitle={2024 IEEE ITSC},
+  pages={2488--2493},
+  year={2024}
+}
+```
