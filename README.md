@@ -1,6 +1,6 @@
 # Spatiotemporal Traffic Forecasting with Missing Data
 
-Graph neural network framework for real-time traffic speed prediction on Nevada DOT's 900-sensor network. **Three model variants** comparing different missing data handling strategies using GMAN architecture.
+Graph neural network framework for real-time traffic speed prediction on Nevada DOT's 900-sensor network. Three model variants comparing different missing data handling strategies using GMAN architecture.
 
 **Published:** IEEE ICVES 2024, IEEE ITSC 2024
 
@@ -8,25 +8,25 @@ Graph neural network framework for real-time traffic speed prediction on Nevada 
 
 ## Problem Statement
 
-Real-world traffic sensor networks face **30-40% missing data** from sensor failures and communication issues. This repository compares three strategies:
-1. **Imputation** - Fill missing values before training
-2. **Hybrid** - Masked inputs, imputed targets
-3. **Uncertainty-preserving** - No imputation, loss only on valid data ⭐
+Real-world traffic sensor networks face 30-40% missing data from sensor failures and communication issues. This repository compares three strategies:
+1. **MICE Baseline** - Full imputation on both input and target before training
+2. **Experiment B(1)** - Masked inputs, imputed targets
+3. **Experiment B(2)** - No imputation, loss only on valid data
 
 ---
 
 ## Model Variants: Technical Comparison
 
-### 1️⃣ Baseline Imputed (`baseline_imputed/`)
+### 1. Baseline Imputed (`baseline_imputed_mice_baseline/`) - MICE Baseline
 
 **Input (X):**
 - Shape: `[batch, num_his, num_sensors]`
-- Missing values **filled** using imputation (forward fill, mean, etc.)
+- Missing values filled using MICE imputation
 - All historical values are complete
 
 **Target (Y):**
 - Shape: `[batch, num_pred, num_sensors]`
-- Missing values **filled** using imputation
+- Missing values filled using MICE imputation
 - All target values are complete
 
 **Loss Calculation:**
@@ -34,25 +34,25 @@ Real-world traffic sensor networks face **30-40% missing data** from sensor fail
 # model/train.py:90
 loss = MSELoss(pred, label)  # All positions included
 ```
-- Standard MSE on **all predictions**
+- Standard MSE on all predictions
 - Treats imputed values as ground truth
 
 **Tradeoff:**
-✅ Simple implementation
-❌ Imputation bias - model trained on artificial data
+- Simple implementation
+- Imputation bias: model trained on artificially reconstructed data
 
 ---
 
-### 2️⃣ Hybrid Masked Input (`hybrid_masked_input/`)
+### 2. Hybrid Masked Input (`hybrid_masked_input_exp_b1/`) - Experiment B(1)
 
 **Input (X):**
 - Shape: `[batch, num_his, num_sensors]`
-- Missing values **preserved** as indicators/masks
-- Model learns from realistic incomplete patterns
+- Missing values preserved as zeros (noisy historical sequences)
+- Model sees realistic incomplete patterns
 
 **Target (Y):**
 - Shape: `[batch, num_pred, num_sensors]`
-- Missing values **filled** using imputation
+- Missing values filled using MICE imputation
 - All target values are complete
 
 **Loss Calculation:**
@@ -60,25 +60,25 @@ loss = MSELoss(pred, label)  # All positions included
 # model/train.py:90
 loss = MSELoss(pred, label)  # Imputed targets
 ```
-- Standard MSE on **imputed targets**
+- Standard MSE on imputed targets
 - No masking in loss function
 
 **Tradeoff:**
-✅ Model handles missing inputs realistically
-❌ Still relies on imputed targets for supervision
+- Model handles missing inputs realistically
+- Still relies on imputed targets for supervision
 
 ---
 
-### 3️⃣ Masked No Imputation (`masked_no_imputation/`) ⭐ **RECOMMENDED**
+### 3. Masked No Imputation (`masked_no_imputation_exp_b2/`) - Experiment B(2)
 
 **Input (X):**
 - Shape: `[batch, num_his, num_sensors]`
-- Missing values represented as **placeholder (-1)**
+- Missing values represented as placeholder (-1)
 - No imputation applied
 
 **Target (Y):**
 - Shape: `[batch, num_pred, num_sensors]`
-- Missing values represented as **placeholder (-1)**
+- Missing values represented as placeholder (-1)
 - No imputation applied
 
 **Loss Calculation:**
@@ -89,15 +89,13 @@ pred_valid = pred[mask]
 label_valid = label[mask]
 loss = MSELoss(pred_valid, label_valid)  # Only real values
 ```
-- Masked MSE computed **only on valid positions**
+- Masked MSE computed only on valid positions
 - Skips batches with zero valid values
 
 **Tradeoff:**
-✅ No imputation bias - learns only from real data
-✅ Preserves prediction uncertainty
-✅ Best forecasting accuracy
-❌ Requires more training data
-❌ Slightly more complex training logic
+- No imputation bias: learns only from real sensor measurements
+- Best MAE across all experiments (3.139 vs 3.47 MICE baseline)
+- Requires sufficient real data coverage per batch
 
 ---
 
@@ -105,51 +103,51 @@ loss = MSELoss(pred_valid, label_valid)  # Only real values
 
 ```
 model_variants/
-├── baseline_imputed/          # Variant 1: Full imputation
+├── baseline_imputed_mice_baseline/   # MICE Baseline: full imputation on X and Y
 │   ├── data/
-│   │   ├── train.csv         # Training data (imputed)
-│   │   ├── val_test.csv      # Validation/test data (imputed)
-│   │   ├── I-15_NB_SE.txt    # Spatial embeddings
-│   │   ├── timestamps_new.txt # Temporal features
-│   │   └── *.pt              # Model checkpoints
-│   ├── figure/               # Output plots and predictions
+│   │   ├── train.csv                # Training data (MICE imputed)
+│   │   ├── val_test.csv             # Validation/test data (MICE imputed)
+│   │   ├── I-15_NB_SE.txt           # Spatial embeddings
+│   │   ├── timestamps_new.txt        # Temporal features
+│   │   └── *.pt                     # Model checkpoints
+│   ├── figure/                      # Output plots and predictions
 │   ├── model/
-│   │   ├── model_.py         # GMAN architecture
-│   │   ├── train.py          # Standard training (MSE on all)
-│   │   └── test.py           # Evaluation
+│   │   ├── model_.py                # GMAN architecture
+│   │   ├── train.py                 # Standard training (MSE on all)
+│   │   └── test.py                  # Evaluation
 │   ├── utils/
-│   │   └── utils_.py         # Data loading & preprocessing
-│   ├── main.py               # Entry point
-│   └── test_chkpt.py         # Checkpoint testing
+│   │   └── utils_.py                # Data loading & preprocessing
+│   ├── main.py                      # Entry point
+│   └── test_chkpt.py                # Checkpoint testing
 │
-├── hybrid_masked_input/       # Variant 2: Masked X, imputed Y
+├── hybrid_masked_input_exp_b1/       # Experiment B(1): noisy X, MICE-imputed Y
 │   ├── data/
-│   │   ├── train_x_0.csv     # Training inputs (with missing)
-│   │   ├── train_y_0.csv     # Training targets (imputed)
-│   │   ├── val_test_x_0.csv  # Val/test inputs (with missing)
-│   │   ├── val_test_y_0.csv  # Val/test targets (imputed)
+│   │   ├── train_x_0.csv            # Training inputs (zeros for missing)
+│   │   ├── train_y_0.csv            # Training targets (MICE imputed)
+│   │   ├── val_test_x_0.csv         # Val/test inputs (with missing)
+│   │   ├── val_test_y_0.csv         # Val/test targets (MICE imputed)
 │   │   ├── I-15_NB_SE.txt
 │   │   └── timestamps_new.txt
 │   ├── figure/
 │   ├── model/
-│   │   ├── model_.py         # GMAN architecture
-│   │   ├── train.py          # Hybrid training (MSE on imputed Y)
+│   │   ├── model_.py                # GMAN architecture
+│   │   ├── train.py                 # Training (MSE on imputed Y)
 │   │   └── test.py
 │   ├── utils/
 │   │   └── utils_.py
 │   ├── main.py
 │   └── test_chkpt.py
 │
-└── masked_no_imputation/      # Variant 3: No imputation (BEST) ⭐
+└── masked_no_imputation_exp_b2/      # Experiment B(2): real measurements only
     ├── data/
-    │   ├── train.csv         # Training data (with -1 placeholders)
-    │   ├── val_test.csv      # Val/test data (with -1 placeholders)
+    │   ├── train.csv                # Training data (-1 placeholders for missing)
+    │   ├── val_test.csv             # Val/test data (-1 placeholders for missing)
     │   ├── I-15_NB_SE.txt
     │   └── timestamps_new.txt
     ├── figure/
     ├── model/
-    │   ├── model_.py         # GMAN architecture
-    │   ├── train.py          # Masked training (MSE on valid only)
+    │   ├── model_.py                # GMAN architecture
+    │   ├── train.py                 # Masked training (MSE on valid only)
     │   └── test.py
     ├── utils/
     │   └── utils_.py
@@ -161,17 +159,17 @@ model_variants/
 
 ## GMAN Architecture
 
-All variants use **Graph Multi-Attention Network (GMAN)**:
+All variants use Graph Multi-Attention Network (GMAN):
 
 ```
-Input → FC → [Encoder: L×STAttBlock] → TransformAttention → [Decoder: L×STAttBlock] → FC → Output
+Input -> FC -> [Encoder: L x STAttBlock] -> TransformAttention -> [Decoder: L x STAttBlock] -> FC -> Output
 ```
 
 **Components:**
 - **STAttBlock** = Spatial Attention + Temporal Attention + Gated Fusion
 - **Spatial Attention**: Multi-head attention over sensors
 - **Temporal Attention**: Multi-head attention over time steps
-- **Transform Attention**: Encoder-decoder for multi-step forecasting
+- **Transform Attention**: Encoder-decoder bridge for multi-step forecasting
 
 **Parameters:** L=3 blocks, K=8 heads, d=8 dims per head
 
@@ -184,17 +182,17 @@ Input → FC → [Encoder: L×STAttBlock] → TransformAttention → [Decoder: L
 pip install torch pandas numpy scikit-learn matplotlib
 ```
 
-### Run Baseline
+### Run MICE Baseline
 ```bash
-cd baseline_imputed
+cd baseline_imputed_mice_baseline
 python main.py --train_file ./data/train.csv \
                --val_test_file ./data/val_test.csv \
                --max_epoch 100 --batch_size 32
 ```
 
-### Run Masked No Imputation (Recommended)
+### Run Experiment B(2) - Real Measurements Only
 ```bash
-cd masked_no_imputation
+cd masked_no_imputation_exp_b2
 python main.py --train_file ./data/train.csv \
                --val_test_file ./data/val_test.csv \
                --missing_value_placeholder -1 \
@@ -204,7 +202,7 @@ python main.py --train_file ./data/train.csv \
 ### Key Arguments
 - `--num_his 20`: Historical time steps
 - `--num_pred 4`: Prediction horizon
-- `--missing_value_placeholder -1`: Placeholder for missing data (variant 3 only)
+- `--missing_value_placeholder -1`: Placeholder for missing data (Exp B(2) only)
 - `--learning_rate 0.01`: Initial learning rate
 - `--cuda_device 0`: GPU device index
 
@@ -212,17 +210,13 @@ python main.py --train_file ./data/train.csv \
 
 ## Results Summary
 
-| Variant | Input Format | Target Format | Loss Calculation | Performance |
-|---------|-------------|---------------|------------------|-------------|
-| Baseline | Imputed | Imputed | MSE (all) | Baseline |
-| Hybrid | Masked | Imputed | MSE (imputed Y) | Moderate improvement |
-| **No Imputation** ⭐ | **Placeholders** | **Placeholders** | **MSE (valid only)** | **Best** |
+| Folder | Experiment | Input Format | Target Format | Loss Calculation | Total MAE | Total RMSE |
+|--------|------------|-------------|---------------|------------------|-----------|------------|
+| `baseline_imputed_mice_baseline` | MICE Baseline | MICE imputed | MICE imputed | MSE (all) | 3.47 | 6.56 |
+| `hybrid_masked_input_exp_b1` | Exp B(1) | Zeros for missing | MICE imputed | MSE (imputed Y) | 3.443 | 6.587 |
+| `masked_no_imputation_exp_b2` | Exp B(2) | -1 placeholder | -1 placeholder | MSE (valid only) | 3.139 | 7.027 |
 
-**Key Findings** (30-40% missing data):
-- ⭐ Masked no imputation achieves **best accuracy** across all metrics
-- All variants maintain **<100ms inference** time
-- Performance gap widens with higher missing data rates
-- See [Publications](#publications) for detailed metrics
+Experiment B(2) achieves the lowest average MAE but higher RMSE on some segments (e.g. CC-215S, US-95S) due to high variability in real sensor data.
 
 ---
 
@@ -233,9 +227,9 @@ python main.py --train_file ./data/train.csv \
 **Timestamps:** `[num_samples, 2]` - (day_of_week, time_of_day)
 
 **Missing values:**
-- Baseline: Filled before training
-- Hybrid: Preserved in X, filled in Y
-- No imputation: `-1` placeholder in both X and Y
+- MICE Baseline: filled before training
+- Exp B(1): zeros in X, MICE-imputed in Y
+- Exp B(2): `-1` placeholder in both X and Y
 
 ---
 
@@ -249,7 +243,6 @@ python main.py --train_file ./data/train.csv \
 
 ## Citation
 
-If you use this code, please cite our papers:
 ```bibtex
 @inproceedings{zahid2024emfac,
   title={Using Deep Traffic Prediction for EMFAC Emission Estimation and Visualization},
@@ -261,13 +254,10 @@ If you use this code, please cite our papers:
 
 @INPROCEEDINGS{10928136,
   author={Bin Zahid, Tarek and Morris, Brendan Tran},
-  booktitle={2024 IEEE International Conference on Vehicular Electronics and Safety (ICVES)}, 
-  title={Benchmarking/Limitations of Traffic Prediction with Noisy Field Measurements}, 
+  booktitle={2024 IEEE International Conference on Vehicular Electronics and Safety (ICVES)},
+  title={Benchmarking/Limitations of Traffic Prediction with Noisy Field Measurements},
   year={2024},
-  volume={},
-  number={},
   pages={1-6},
-  keywords={Training;Vehicular and wireless technologies;Accuracy;Roads;Urban planning;Predictive models;Transformers;Data models;Robustness;Noise measurement},
-  doi={10.1109/ICVES61986.2024.10928136}}
-
+  doi={10.1109/ICVES61986.2024.10928136}
+}
 ```
